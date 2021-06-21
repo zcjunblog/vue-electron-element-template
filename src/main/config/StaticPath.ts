@@ -16,3 +16,4 @@ export const winURL = process.env.NODE_ENV === 'development' ? `http://localhost
 export const loadingURL = process.env.NODE_ENV === 'development' ? `http://localhost:${process.env.PORT}/loader.html` : `file://${__static}/loader.html`
 export const lib = __lib
 export const updateFolder = __updateFolder
+export const logoURL = process.env.NODE_ENV === 'development' ? join(__dirname, '../../../static/logo.png') : `${__static}/logo.png`
