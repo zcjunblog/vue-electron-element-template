@@ -3,9 +3,8 @@ import config from '@config/index'
 import menuconfig from '../config/menu'
 import DownloadUpdate from './downloadFile'
 import Update from './checkupdate';
-import path from 'path'
 import { app, BrowserWindow, Menu, Tray, dialog } from 'electron'
-import { winURL, loadingURL } from '../config/StaticPath'
+import { winURL, loadingURL, logoURL } from '../config/StaticPath'
 
 class MainInit {
 
@@ -18,7 +17,7 @@ class MainInit {
   constructor() {
     this.winURL = winURL
     this.shartURL = loadingURL
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' ? true : !config.build.DisableF12) {
       menuconfig.push({
         label: '开发者设置',
         submenu: [{
@@ -29,13 +28,29 @@ class MainInit {
       })
     }
   }
+  // PC端
+  // 按屏幕宽度大小排序
+  // 分辨率   比例 | 设备尺寸
+  // 1024*500 （8.9寸）
+  // 1024*768 （比例4：3  | 10.4寸、12.1寸、14.1寸、15寸; ）
+  // 1280*800（16：10  |15.4寸）
+  // 1280*1024(比例：5：4  | 14.1寸、15.0寸)
+  // 1280*854(比例：15：10 | 15.2）
+  // 1366*768 (比例：16：9 | 不常见）
+  // 1440*900 （16：10  17寸 仅苹果用）
+  // 1440*1050（比例：5：4  | 14.1寸、15.0寸）
+  // 1600*1024（14：9  不常见）
+  // 1600*1200 （4：3 | 15、16.1）
+  // 1680*1050（16：10 | 15.4寸、20.0寸）
+  // 1920*1200 (23寸）
   // 主窗口函数
   createMainWindow() {
     this.mainWindow = new BrowserWindow({
-      height: 900,
+      height: 854,
       useContentSize: true,
-      width: 1600,
-      minWidth: 1366,
+      width: 1280,
+      minWidth: 1280,
+      minHeight: 854,
       show: false,
       frame: config.IsUseSysTitle,
       titleBarStyle: 'hidden',
@@ -44,8 +59,8 @@ class MainInit {
         nodeIntegration: true,
         webSecurity: false,
         // 如果是开发模式可以使用devTools
-        devTools: process.env.NODE_ENV === 'development',
-        // devTools: true,
+        // devTools: process.env.NODE_ENV === 'development',
+        devTools: process.env.NODE_ENV === 'development' ? true : !config.build.DisableF12, // 跟随禁用f12的配置
         // 在macos中启用橡皮动画
         scrollBounce: process.platform === 'darwin'
       }
@@ -56,10 +71,11 @@ class MainInit {
     Menu.setApplicationMenu(menu)
     // 加载主窗口
     this.mainWindow.loadURL(this.winURL)
+    // TODO: 暂时不使用electron提供的更新方案
     // 下载文件
-    new DownloadUpdate(this.mainWindow).start()
+    // new DownloadUpdate(this.mainWindow).start()
     // electron-update注册
-    new Update(this.mainWindow)
+    // new Update(this.mainWindow)
     // 启用协议，这里暂时只用于自定义头部的时候使用
     setIpc.Mainfunc(this.mainWindow, config.IsUseSysTitle)
     // dom-ready之后显示界面
@@ -69,7 +85,7 @@ class MainInit {
     })
     // this.mainWindow.webContents.openDevTools({ mode: 'undocked', activate: true })
     // 开发模式下自动开启devtools
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' ? true : !config.build.DisableF12) {
       this.mainWindow.webContents.openDevTools({ mode: 'undocked', activate: true })
     }
     // 当确定渲染进程卡死时，分类型进行告警操作
@@ -173,38 +189,52 @@ class MainInit {
       })
     })
 
+    // 创建托盘图标
+    this.mainWindow.hide();
+    // 当前目录下的app.ico图标
+    this.appTray = new Tray(logoURL)
+    // 图标的上下文菜单
+    const contextMenu = Menu.buildFromTemplate([{// 系统托盘图标目录
+      label: '退出',
+      click:  ()=> {
+        this.mainWindow.destroy();
+      }
+    }])
+    // 设置托盘悬浮提示
+    this.appTray.setToolTip('I‘m 易齿君');
+    // 设置托盘菜单
+    this.appTray.setContextMenu(contextMenu);
+    // 单击托盘小图标显示应用
+    this.appTray.on('click', ()=>{
+      // 显示主程序
+      this.mainWindow.show();
+      // 关闭托盘显示
+      // this.appTray.destroy();
+    });
+
+    const gotTheLock = app.requestSingleInstanceLock()
+    if (!gotTheLock) {
+      app.quit()
+    } else {
+      app.on('second-instance', (event) => {
+        if (this.mainWindow) {
+          if (this.mainWindow.isMinimized()) this.mainWindow.restore()
+          this.mainWindow.focus()
+        }
+      })
+    }
+
     app.on('gpu-process-crashed', () => {
 
     })
 
     this.mainWindow.on('close', (e) => {
-      e.preventDefault();
-      this.mainWindow.hide();
-      // 创建托盘图标
-      // 当前目录下的app.ico图标
-      let iconPath = path.join(__dirname, '../../../static/logo.png');
-      this.appTray = new Tray(iconPath)
-      // 图标的上下文菜单
-      const contextMenu = Menu.buildFromTemplate([{// 系统托盘图标目录
-        label: '退出',
-        click:  ()=> {
-          app.quit();
-        }
-      }])
+      e.preventDefault(); // 禁止关闭行为
       // 隐藏主窗口
       this.mainWindow.hide();
-      // 设置托盘悬浮提示
-      this.appTray.setToolTip('I‘m 易齿君');
-      // 设置托盘菜单
-      this.appTray.setContextMenu(contextMenu);
-      // 单击托盘小图标显示应用
-      this.appTray.on('click', ()=>{
-        // 显示主程序
-        this.mainWindow.show();
-        // 关闭托盘显示
-        this.appTray.destroy();
-      });
+
     })
+
     this.mainWindow.on('closed', () => {
       this.mainWindow = null
     })
