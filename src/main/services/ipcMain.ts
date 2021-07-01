@@ -2,6 +2,7 @@ import { ipcMain, dialog, BrowserWindow } from 'electron'
 import Server from '../server'
 import { winURL } from '../config/StaticPath'
 import { updater } from './HotUpdater'
+import config from '@config/index'
 
 export default {
   Mainfunc(mainWindow: BrowserWindow, IsUseSysTitle: Boolean) {
@@ -35,8 +36,8 @@ export default {
     })
     ipcMain.handle('open-errorbox', (event, arg) => {
       dialog.showErrorBox(
-        arg.title,
-        arg.message
+          arg.title,
+          arg.message
       )
     })
     ipcMain.handle('statr-server', async () => {
@@ -46,8 +47,8 @@ export default {
         return serveStatus
       } catch (error) {
         dialog.showErrorBox(
-          '错误',
-          error
+            '错误',
+            error
         )
       }
     })
@@ -57,8 +58,8 @@ export default {
         return serveStatus
       } catch (error) {
         dialog.showErrorBox(
-          '错误',
-          error
+            '错误',
+            error
         )
       }
     })
@@ -67,7 +68,7 @@ export default {
     })
     ipcMain.handle('open-win', (event, arg) => {
       const ChildWin = new BrowserWindow({
-        height: 595,
+        height: 1200,
         useContentSize: true,
         width: 842,
         autoHideMenuBar: true,
@@ -78,12 +79,15 @@ export default {
           contextIsolation: false,
           webSecurity: false,
           // 如果是开发模式可以使用devTools
-          devTools: process.env.NODE_ENV === 'development',
+          devTools: process.env.NODE_ENV === 'development' ? true : !config.build.DisableF12,
           // devTools: true,
           // 在macos中启用橡皮动画
           scrollBounce: process.platform === 'darwin'
         }
       })
+      if (process.env.NODE_ENV === 'development' ? true : !config.build.DisableF12) {
+        ChildWin.webContents.openDevTools({mode: 'undocked', activate: true})
+      }
       ChildWin.loadURL(winURL + `#${arg.url}`)
       ChildWin.webContents.once('dom-ready', () => {
         ChildWin.show()

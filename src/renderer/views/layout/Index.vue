@@ -8,7 +8,7 @@
             <div class="left-menu" >
                 <el-menu
                         :collapse="collapse"
-                        default-active="0"
+                        :default-active="curMenuIndex"
                         class="el-menu-vertical"
                         @select="onCollapse"
                         background-color="#222834"
@@ -38,7 +38,7 @@
                 </div>
             </div>
             <div class="right-main">
-                <slot></slot>
+                <router-view></router-view>
             </div>
             <div class="right-bottom"></div>
         </div>
@@ -56,22 +56,30 @@
                 {
                     index: '0',
                     value: '首页',
+                    routerName: 'Workbench',
                     icon: 'data-analysis'
                 },
                 {
                     index: '1',
                     value: '任务',
+                    routerName: 'Order',
                     icon: 'tickets'
                 }
             ]
         }),
         created() {
+            if(this.vuex_menuIndex){
+                this.curMenuIndex = this.vuex_menuIndex
+            }
         },
         mounted() {
         },
         methods: {
             onCollapse(key){
-                this.curMenuIndex = Number(key)
+                this.curMenuIndex = key
+                let routerName = this.menus[this.curMenuIndex].routerName // 跳转对应的路由
+                this.$m.vuex('vuex_menuIndex',this.curMenuIndex)
+                this.$router.push({name:routerName})
             },
         },
     });

@@ -1,6 +1,5 @@
 <template>
     <div class="main">
-        <layout>
             <div class="home">
                 <el-row :gutter="15">
                     <el-col :span="6">
@@ -46,7 +45,6 @@
                     </el-col>
                 </el-row>
             </div>
-        </layout>
     </div>
 </template>
 
@@ -59,7 +57,6 @@
     import cardTable from './components/card-table.vue';
     export default defineComponent({
         components:{
-            layout,
             cardList,
             cardTable,
             cardChart,

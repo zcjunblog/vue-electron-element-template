@@ -1,6 +1,6 @@
 module.exports = {
   build: {
-    DisableF12: true,
+    DisableF12: true, // 此配置已升级为禁用devtool 而非 单纯禁用f12
     env: require('./prod.env'),
     hotPublishUrl:"",
     hotPublishConfigName: ""

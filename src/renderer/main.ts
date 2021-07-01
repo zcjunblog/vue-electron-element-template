@@ -23,6 +23,21 @@ app.use(router)
 app.use(store)
 errorHandler(app)
 
+// 防重复点击全局指令
+app.directive('ReClick', {
+    // 当被绑定的元素插入到 DOM 中时……
+    mounted(el) {
+        el.addEventListener('click', () => {
+            if (!el.disabled) {
+                el.disabled = true // 设置element button disable为true
+                setTimeout(() => {
+                    el.disabled = false
+                }, 1500)
+            }
+        })
+    }
+})
+
 // 全局引入 TitleBar 组件
 app.component("TitleBar", TitleBar);
 

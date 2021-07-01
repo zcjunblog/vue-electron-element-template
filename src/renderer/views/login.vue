@@ -38,6 +38,8 @@ export default defineComponent({
   },
   mounted() {
     // setTimeout(()=>{this.checkLoginStatus()},3000)
+    this.$m.vuex('vuex_menuIndex', '0')
+    this.$m.vuex('vuex_version', packageInfo.version)
   },
   methods: {
     checkLoginStatus(){
